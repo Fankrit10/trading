@@ -1,0 +1,96 @@
+trigger:
+- dev
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'containerregistrydevnqa.azurecr.io/trading'
+  tag: '$(Build.BuildId)'
+  port: '8001'
+
+steps:
+
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Install dependences'
+
+- script: |
+    coverage run -m pytest
+    coverage report -m
+  displayName: 'Test and coverage'
+
+- script: |
+    flake8 .
+  displayName: 'Analized flake8 code'
+
+- script: |
+    pylint trading/.
+  displayName: 'Analized pylint'
+
+- script: |
+    bandit -r trading\ -x trading\tests,trading\venv,trading\__pycache__,trading\.pytest_cache,trading\fakes
+  displayName: 'Analized Security'
+
+- task: AzureKeyVault@2
+  inputs:
+    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    KeyVaultName: 'nqadesarrolloback'
+    SecretsFilter: '*'
+    RunAsPreJob: true
+
+- task: AzureCLI@2
+  inputs:
+    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az acr login --name containerregistrydevnqa
+      docker build --build-arg TWINE_PASSWORD=$(TWINE-PASSWORD) -t containerregistrydevnqa.azurecr.io/trading:$(tag) .
+      docker push containerregistrydevnqa.azurecr.io/trading:$(tag)
+  displayName: 'Build and Push Docker Image to ACR'
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    WebAppName: 'trading'
+    appType: 'webAppContainer'
+    deployToSlotOrASE: true
+    ResourceGroupName: 'nqa-desarrollo-back'
+    SlotName: 'production'
+    DockerNamespace: 'containerregistrydevnqa.azurecr.io'
+    DockerRepository: 'trading'
+    DockerImageTag: $(tag)
+    AppSettings: '-WEBSITES_PORT 8001'
+
+- task: AzureAppServiceSettings@1
+  displayName: 'Set App Service Settings'
+  inputs:
+    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    appName: 'trading'
+    resourceGroupName: 'nqa-desarrollo-back'
+    appSettings: |
+      [   
+        {
+          "name": "MONGO_URL",
+          "value": "$(MONGO-URL)"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+          "value": "$(DOCKER-REGISTRY-SERVER-PASSWORD)"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_URL",
+          "value": "$(DOCKER-REGISTRY-SERVER-URL)"
+        },
+        {
+          "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+          "value": "$(DOCKER-REGISTRY-SERVER-USERNAME)"
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "value": "$(OPENAI-API-KEY)"
+        }
+      ]
