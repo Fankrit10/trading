@@ -5,7 +5,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  imageName: 'containerregistrydevnqa.azurecr.io/trading'
+  imageName: 'containerregistrydevtrading.azurecr.io/trading'
   tag: '$(Build.BuildId)'
   port: '8001'
 
@@ -35,32 +35,32 @@ steps:
 
 - task: AzureKeyVault@2
   inputs:
-    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
-    KeyVaultName: 'nqadesarrolloback'
+    azureSubscription: 'trading-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    KeyVaultName: 'tradingdesarrolloback'
     SecretsFilter: '*'
     RunAsPreJob: true
 
 - task: AzureCLI@2
   inputs:
-    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    azureSubscription: 'trading-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
     scriptType: 'bash'
     scriptLocation: 'inlineScript'
     inlineScript: |
-      az acr login --name containerregistrydevnqa
-      docker build --build-arg TWINE_PASSWORD=$(TWINE-PASSWORD) -t containerregistrydevnqa.azurecr.io/trading:$(tag) .
-      docker push containerregistrydevnqa.azurecr.io/trading:$(tag)
+      az acr login --name containerregistrydevtrading
+      docker build --build-arg TWINE_PASSWORD=$(TWINE-PASSWORD) -t containerregistrydevtrading.azurecr.io/trading:$(tag) .
+      docker push containerregistrydevtrading.azurecr.io/trading:$(tag)
   displayName: 'Build and Push Docker Image to ACR'
 
 - task: AzureRmWebAppDeployment@4
   inputs:
     ConnectionType: 'AzureRM'
-    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    azureSubscription: 'trading-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
     WebAppName: 'trading'
     appType: 'webAppContainer'
     deployToSlotOrASE: true
-    ResourceGroupName: 'nqa-desarrollo-back'
+    ResourceGroupName: 'trading-desarrollo-back'
     SlotName: 'production'
-    DockerNamespace: 'containerregistrydevnqa.azurecr.io'
+    DockerNamespace: 'containerregistrydevtrading.azurecr.io'
     DockerRepository: 'trading'
     DockerImageTag: $(tag)
     AppSettings: '-WEBSITES_PORT 8001'
@@ -68,9 +68,9 @@ steps:
 - task: AzureAppServiceSettings@1
   displayName: 'Set App Service Settings'
   inputs:
-    azureSubscription: 'nqa-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
+    azureSubscription: 'trading-desarrollo-back(28463d1b-cdcc-4b6b-9248-69e708529c65)'
     appName: 'trading'
-    resourceGroupName: 'nqa-desarrollo-back'
+    resourceGroupName: 'trading-desarrollo-back'
     appSettings: |
       [   
         {

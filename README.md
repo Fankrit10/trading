@@ -15,7 +15,7 @@
   [https://support.google.com/googleplay/thread/267532884/error-compra-or-cbat-23?hl=es](https://support.google.com/googleplay/thread/267532884/error-compra-or-cbat-23?hl=es)
 - **Deployment was completed on Azure** due to Google Cloud payment issues.
 - Deployment uses **Docker** and **docker-compose**.
-- `.env` file required. Particularly, a correct `MONGO_URL` must be supplied for correct operation.
+- `.env` file required. Particularly, a correct `MONGO_URL`, `OPENAI_API_KEY` must be supplied for correct operation.
 
 ---
 
@@ -27,6 +27,7 @@
   - `POST /signal`: Send new trading signal
   - `GET /performance`: Retrieve current cumulative return
   - `GET /history`: Retrieve trading history
+  - `GET /enhance_performance`: Enhance with LLM
 - **Unit Tests and Quality Analysis:**
   - `pytest` for unit testing
   - `flake8` for code style checking
@@ -54,7 +55,7 @@
 ### Requirements
 
 - `docker-compose` installed
-- `.env` file with `MONGO_URL` provided (check your email for the connection string).
+- `.env` file with `MONGO_URL`, `OPENAI_API_KEY` provided (check your email for the connection string).
 
 ### Run locally
 
